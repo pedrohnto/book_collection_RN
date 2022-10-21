@@ -14,6 +14,14 @@ function BookList() {
         getBooks();
     }, []);
 
+    useEffect(() => {
+        const unsubscribe = navigation.addListener('focus', () => {
+            getBooks();
+        });
+    
+        return unsubscribe;
+      }, [navigation]);
+
     const getBooks = async () => {
         setLoading(true)
         axios.get(`http://10.0.2.2:3000/books`).then((response) => {
@@ -25,18 +33,17 @@ function BookList() {
     }
 
     const goToBookForm = () => {
-        console.log('oi')
         navigation.navigate('BookForm');
     }
 
     const goToBookDetail = (item) => {
-        navigation.navigate('BookDetail');
+        navigation.navigate('BookDetail', { book: item });
     }
 
     return (
         <View style={styles.container}>
             <View style={{ alignItems: 'center' }}>
-                <TouchableOpacity style={styles.button} onPress={goToBookForm}>
+                <TouchableOpacity style={styles.button} onPress={() => goToBookForm()}>
                     <Text style={styles.button_label}>CADASTRAR NOVO LIVRO</Text>
                 </TouchableOpacity>
             </View>
@@ -45,7 +52,7 @@ function BookList() {
                     data={data}
                     keyExtractor={({ id }, index) => id}
                     renderItem={({ item }) => (
-                        <TouchableOpacity style={styles.item_list}>
+                        <TouchableOpacity style={styles.item_list} onPress={() => goToBookDetail(item)}>
                             <View >
                                 <Text style={styles.item_list_title}>{item.title}</Text>
                                 <Text style={styles.item_list_author}>{item.author}</Text>
