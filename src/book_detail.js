@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, Image, View, ActivityIndicator, FlatList, Text, TouchableOpacity, Alert } from 'react-native';
+import { StyleSheet, Image, View, ActivityIndicator, FlatList, Text, TouchableOpacity, Alert, Dimensions } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 
 import axios from 'axios';
@@ -7,6 +7,7 @@ import axios from 'axios';
 function BookDetail() {
 
     const [book, setBook] = useState({});
+    const [isLoading, setLoading] = useState(false);
 
     const navigation = useNavigation();
     const route = useRoute();
@@ -26,16 +27,15 @@ function BookDetail() {
             "Deseja realmente apagar o livro?",
             [
                 { text: "Cancelar" },
-                { text: "APAGAR", onPress: () => navigation.navigate('BookList') }
+                { text: "APAGAR", onPress: () => deleteBook() }
             ]
         );
-
-
-
     }
 
     const deleteBook = () => {
+        setLoading(true);
         axios.delete(`http://10.0.2.2:3000/books/${book.id}`).then((response) => {
+            setLoading(false);
             Alert.alert(
                 "SUCESSO",
                 "Livro apagado com sucesso!",
@@ -44,33 +44,43 @@ function BookDetail() {
                 ]
             );
         }).catch(function (error) {
+            setLoading(false);
             alert(error)
         });
     }
 
     return (
         <View style={{ flex: 1, padding: 10 }, styles.container}>
-            <View style={{ flex: 2 }}>
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Text style={styles.title}>{book.title}</Text>
-                    <Image
-                        source={require('./assets/ok-48.png')}
-                        style={{ width: 24, height: 24, display: book.read ? 'flex' : 'none' }}
-                    ></Image>
+            <View style={{ flex: 1 }}>
+                <View style={{ flex: 2 }}>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <Text style={styles.title}>{book.title}</Text>
+                        <Image
+                            source={require('./assets/ok-48.png')}
+                            style={{ width: 24, height: 24, display: book.read ? 'flex' : 'none' }}
+                        ></Image>
+                    </View>
+                    <Text style={styles.author}>{book.author}</Text>
+                    <Text style={styles.author}>{book.publisher}</Text>
+                    <Text style={styles.author}>{book.yearBuyed}</Text>
+                    <Text>{book.notes}</Text>
                 </View>
-                <Text style={styles.author}>{book.author}</Text>
-                <Text style={styles.author}>{book.publisher}</Text>
-                <Text style={styles.author}>{book.yearBuyed}</Text>
-                <Text>{book.notes}</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around' }}>
+                    <TouchableOpacity style={styles.button} onPress={() => goToBookForm()}>
+                        <Text style={styles.button_label}>EDITAR</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.button, styles.button_delete} onPress={() => confirmDeletion()}>
+                        <Text style={styles.button_label}>APAGAR</Text>
+                    </TouchableOpacity>
+                </View>
             </View>
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around' }}>
-                <TouchableOpacity style={styles.button} onPress={() => goToBookForm()}>
-                    <Text style={styles.button_label}>EDITAR</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.button, styles.button_delete} onPress={() => confirmDeletion()}>
-                    <Text style={styles.button_label}>APAGAR</Text>
-                </TouchableOpacity>
-            </View>
+            {isLoading && <View style={{
+                alignItems: 'center', justifyContent: 'center',
+                backgroundColor: '#000000aa', flex: 1, position: 'absolute', width: Dimensions.get('window').width,
+                height: Dimensions.get('window').height
+            }}>
+                <ActivityIndicator color={'#1a8dc7'} size="large" />
+            </View>}
         </View>
     )
 }

@@ -6,6 +6,8 @@ import axios from 'axios';
 
 function BookList() {
     const [isLoading, setLoading] = useState(false);
+    const [hasItens, setHasItens] = useState(false);
+    const [successRequest, setSuccessRequest] = useState(false);
     const [data, setData] = useState([]);
 
     const navigation = useNavigation();
@@ -18,17 +20,21 @@ function BookList() {
         const unsubscribe = navigation.addListener('focus', () => {
             getBooks();
         });
-    
+
         return unsubscribe;
-      }, [navigation]);
+    }, [navigation]);
 
     const getBooks = async () => {
         setLoading(true)
         axios.get(`http://10.0.2.2:3000/books`).then((response) => {
             setData(response.data)
             setLoading(false)
+            setSuccessRequest(true)
+            setHasItens(response.data.length > 0)
         }).catch(function (error) {
+            alert('Não foi possível estabelecer uma comunicação com o servidor, tente novamente mais tarde.')
             setLoading(false)
+            setSuccessRequest(false)
         });
     }
 
@@ -42,30 +48,51 @@ function BookList() {
 
     return (
         <View style={styles.container}>
-            <View style={{ alignItems: 'center' }}>
-                <TouchableOpacity style={styles.button} onPress={() => goToBookForm()}>
-                    <Text style={styles.button_label}>CADASTRAR NOVO LIVRO</Text>
-                </TouchableOpacity>
-            </View>
-            {isLoading ? <ActivityIndicator size="large" style={{ flex: 1 }} /> : (
-                <FlatList
-                    data={data}
-                    keyExtractor={({ id }, index) => id}
-                    renderItem={({ item }) => (
-                        <TouchableOpacity style={styles.item_list} onPress={() => goToBookDetail(item)}>
-                            <View >
-                                <Text style={styles.item_list_title}>{item.title}</Text>
-                                <Text style={styles.item_list_author}>{item.author}</Text>
-                                <Text>{item.publisher}</Text>
-                            </View>
-                            <Image
-                                source={require('./assets/ok-48.png')}
-                                style={{ width: 24, height: 24, display: item.read ? 'flex' : 'none' }}
-                            ></Image>
-                        </TouchableOpacity>
-                    )}
-                />
-            )}
+            {isLoading ?
+                <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                    <ActivityIndicator color={'#1a8dc7'} size="large" />
+                    <Text style={{ fontSize: 20 }}>Loading</Text>
+                </View> :
+                <View style={{ flex: 1 }} >
+                    {successRequest ?
+                        <View>
+                            <TouchableOpacity style={styles.button} onPress={() => goToBookForm()}>
+                                <Text style={styles.button_label}>CADASTRAR NOVO LIVRO</Text>
+                            </TouchableOpacity>
+                            {hasItens ?
+                                <View>
+                                    <FlatList
+                                        data={data}
+                                        keyExtractor={({ id }, index) => id}
+                                        renderItem={({ item }) => (
+                                            <TouchableOpacity style={styles.item_list} onPress={() => goToBookDetail(item)}>
+                                                <View >
+                                                    <Text style={styles.item_list_title}>{item.title}</Text>
+                                                    <Text style={styles.item_list_author}>{item.author}</Text>
+                                                    <Text>{item.publisher}</Text>
+                                                </View>
+                                                <Image
+                                                    source={require('./assets/ok-48.png')}
+                                                    style={{ width: 24, height: 24, display: item.read ? 'flex' : 'none' }}
+                                                ></Image>
+                                            </TouchableOpacity>
+                                        )}
+                                    />
+                                </View> :
+                                <View style={{ alignItems: 'center' }}>
+                                    <Text>Nenhum Livro Cadastrado</Text>
+                                </View>
+                            }
+                        </View> :
+                        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                            <Text style={{ fontSize: 20 }}>Nenhum Item Encontrado</Text>
+                            <TouchableOpacity style={styles.button} onPress={() => getBooks()}>
+                                <Text style={styles.button_label}>RECARREGAR</Text>
+                            </TouchableOpacity>
+                        </View>
+                    }
+                </View>
+            }
         </View>
     )
 }
